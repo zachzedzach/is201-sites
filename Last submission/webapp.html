@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+  <title>Surfboard Fortune</title>
+  <link href="css/styles.css" rel="stylesheet" />
+  <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,400italic,700italic" rel="stylesheet" type="text/css" />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(ellipse at center, #011, #000);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana,
+        sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #0ff;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 90vw;
+      padding: 30px;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 20px;
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      text-shadow: 0 0 15px #0ff;
+    }
+
+    svg {
+      width: 100px;
+      height: 200px;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+      filter: drop-shadow(0 0 12px #0ff);
+    }
+
+    svg:hover {
+      transform: scale(1.05) rotate(2deg);
+    }
+
+    #fortune {
+      margin-top: 20px;
+      min-height: 60px;
+      font-size: 1.1rem;
+      color: #aefcff;
+      transition: opacity 0.4s ease;
+    }
+
+    #shareBtn {
+      margin-top: 15px;
+      padding: 8px 16px;
+      background: #0ff;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: #000;
+      transition: background 0.3s, transform 0.2s;
+    }
+
+    #shareBtn:hover {
+      background: #00e0ff;
+    }
+
+    #history {
+      margin-top: 20px;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    #history h2 {
+      margin-bottom: 8px;
+      font-size: 1rem;
+      color: #aefcff;
+    }
+
+    #historyList {
+      list-style: none;
+      padding: 0;
+      max-height: 100px;
+      overflow-y: auto;
+    }
+
+    #historyList li {
+      margin-bottom: 4px;
+    }
+
+    @keyframes jiggle {
+      0%,
+      100% {
+        transform: scale(1) rotate(0);
+      }
+      25% {
+        transform: scale(1.1) rotate(2deg);
+      }
+      75% {
+        transform: scale(1.1) rotate(-2deg);
+      }
+    }
+
+    .jiggle {
+      animation: jiggle 0.4s ease;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation-->
+  <nav class="navbar navbar-expand-lg navbar-light" id="mainNav">
+      <div class="container px-4 px-lg-5">
+          <a class="navbar-brand" href="webapp.html">Webapp</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+              Menu
+              <i class="fas fa-bars"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarResponsive">
+              <ul class="navbar-nav ms-auto py-4 py-lg-0">
+                  <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="resume.html">Home</a></li>
+                  <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="scratch.html">Scratch</a></li>
+                  <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="webapp.html">Webapp</a></li>
+                  
+              </ul>
+          </div>
+      </div>
+  </nav>
+  
+  <canvas id="bg"></canvas>
+
+  <div id="app">
+    <h1>🌊 Surfboard Fortune</h1>
+
+    <svg
+      id="surfboard"
+      viewBox="0 0 100 200"
+      role="button"
+      aria-label="Get a surfboard fortune"
+      tabindex="0"
+    >
+      <ellipse
+        cx="50"
+        cy="100"
+        rx="20"
+        ry="80"
+        fill="#0ff"
+      />
+    </svg>
+
+    <div id="fortune">
+      Click the board to receive your wave of wisdom.
+    </div>
+
+    <button id="shareBtn">Share My Fortune</button>
+
+    <div id="history">
+      <h2>Recent Fortunes</h2>
+      <ul id="historyList"></ul>
+    </div>
+  </div>
+
+  <audio
+    id="oceanSound"
+    src="assets/ocean.mp3"
+    loop
+  ></audio>
+
+  <script>
+    // Responsive canvas
+    const canvas = document.getElementById('bg');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Particle system
+    let particles = [];
+    function addParticles(x, y) {
+      for (let i = 0; i < 10; i++) {
+        particles.push({
+          x,
+          y,
+          dx: (Math.random() - 0.5) * 4,
+          dy: (Math.random() - 0.5) * 4,
+          alpha: 1,
+          size: Math.random() * 4 + 2
+        });
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      particles.forEach((p, i) => {
+        p.x += p.dx;
+        p.y += p.dy;
+        p.alpha -= 0.01;
+        if (p.alpha <= 0) particles.splice(i, 1);
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(0,255,255,${p.alpha})`;
+        ctx.fill();
+      });
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    // Fortune logic
+    const board = document.getElementById('surfboard');
+    const fortuneText = document.getElementById('fortune');
+    const oceanSound = document.getElementById('oceanSound');
+    let soundStarted = false;
+
+    const fortunes = [
+      '🏄‍♂️ Ride the wave, don’t fight it.',
+      '🌴 Your greatest surf is yet to come.',
+      '💧 In still water, clarity. In waves, strength.',
+      '🌊 Don’t wait for the perfect wave — paddle now.',
+      '🍃 Let go. Flow with the tide.',
+      '⚖️ Balance isn’t found, it’s felt.',
+      '🌅 Every fall is a chance to rise smoother.',
+      '🏝️ You are the board. Steer wisely.',
+      '🎯 Catch joy like you catch waves — fully present.',
+      '🌬️ Salt in the air clears the mind.'
+    ];
+
+    const historyKey = 'surfFortuneHistory';
+
+    function loadHistory() {
+      return JSON.parse(localStorage.getItem(historyKey) || '[]');
+    }
+
+    function saveHistory(arr) {
+      localStorage.setItem(historyKey, JSON.stringify(arr.slice(-5)));
+    }
+
+    function renderHistory() {
+      const list = loadHistory();
+      const ul = document.getElementById('historyList');
+      ul.innerHTML = '';
+      list.slice().reverse().forEach(f => {
+        const li = document.createElement('li');
+        li.textContent = f;
+        ul.appendChild(li);
+      });
+    }
+
+    renderHistory();
+
+    function startSound() {
+      if (!soundStarted) {
+        oceanSound.volume = 0;
+        oceanSound.play();
+        const fade = setInterval(() => {
+          if (oceanSound.volume < 0.6) {
+            oceanSound.volume += 0.05;
+          } else {
+            clearInterval(fade);
+          }
+        }, 200);
+        soundStarted = true;
+      }
+    }
+
+    document
+      .getElementById('shareBtn')
+      .addEventListener('click', () => {
+        const text = fortuneText.textContent;
+        if (navigator.share) {
+          navigator.share({
+            title: 'My Surfboard Fortune',
+            text
+          });
+        } else {
+          navigator
+            .clipboard.writeText(text)
+            .then(() => alert('Copied!'));
+        }
+      });
+
+    board.addEventListener('click', () => {
+      startSound();
+      board.classList.remove('jiggle');
+      // trigger reflow
+      void board.offsetWidth;
+      board.classList.add('jiggle');
+
+      const rect = board.getBoundingClientRect();
+      addParticles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+
+      const newMsg =
+        fortunes[Math.floor(Math.random() * fortunes.length)];
+      fortuneText.style.opacity = 0;
+
+      setTimeout(() => {
+        fortuneText.textContent = newMsg;
+        fortuneText.style.opacity = 1;
+        const hist = loadHistory();
+        hist.push(newMsg);
+        saveHistory(hist);
+        renderHistory();
+      }, 300);
+    });
+
+    // Keyboard support
+    board.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        board.click();
+      }
+    });
+  </script>
+</body>
+</html>
