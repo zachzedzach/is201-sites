@@ -187,150 +187,128 @@
     loop
   ></audio>
 
-  <script>
-    // Responsive canvas
-    const canvas = document.getElementById('bg');
-    const ctx = canvas.getContext('2d');
+  <!-- DELETE the old nested script mess first -->
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
+<script type="module">
+  /* ---------- 1. import the fortunes ---------- */
+  import fortunes from './js/fortunes.js';   <!-- no leading slash is safest -->
 
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+  /* ---------- 2. your existing code ---------- */
 
-    // Particle system
-    let particles = [];
-    function addParticles(x, y) {
-      for (let i = 0; i < 10; i++) {
-        particles.push({
-          x,
-          y,
-          dx: (Math.random() - 0.5) * 4,
-          dy: (Math.random() - 0.5) * 4,
-          alpha: 1,
-          size: Math.random() * 4 + 2
-        });
-      }
-    }
+  // Responsive canvas
+  const canvas = document.getElementById('bg');
+  const ctx    = canvas.getContext('2d');
 
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+  function resizeCanvas() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
 
-      particles.forEach((p, i) => {
-        p.x += p.dx;
-        p.y += p.dy;
-        p.alpha -= 0.01;
-        if (p.alpha <= 0) particles.splice(i, 1);
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(0,255,255,${p.alpha})`;
-        ctx.fill();
-      });
-
-      requestAnimationFrame(animate);
-    }
-
-    animate();
-
-    // Fortune logic
-    const board = document.getElementById('surfboard');
-    const fortuneText = document.getElementById('fortune');
-    const oceanSound = document.getElementById('oceanSound');
-    let soundStarted = false;
-
-    <script type="module">
-  import fortunes from '/js/fortunes.js';
-
-  // …everything that used to follow your const fortunes = [...] line
-</script>
-    const historyKey = 'surfFortuneHistory';
-
-    function loadHistory() {
-      return JSON.parse(localStorage.getItem(historyKey) || '[]');
-    }
-
-    function saveHistory(arr) {
-      localStorage.setItem(historyKey, JSON.stringify(arr.slice(-5)));
-    }
-
-    function renderHistory() {
-      const list = loadHistory();
-      const ul = document.getElementById('historyList');
-      ul.innerHTML = '';
-      list.slice().reverse().forEach(f => {
-        const li = document.createElement('li');
-        li.textContent = f;
-        ul.appendChild(li);
+  // Particle system
+  let particles = [];
+  function addParticles(x, y) {
+    for (let i = 0; i < 10; i++) {
+      particles.push({
+        x, y,
+        dx: (Math.random() - 0.5) * 4,
+        dy: (Math.random() - 0.5) * 4,
+        alpha: 1,
+        size: Math.random() * 4 + 2
       });
     }
+  }
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach((p, i) => {
+      p.x += p.dx;
+      p.y += p.dy;
+      p.alpha -= 0.01;
+      if (p.alpha <= 0) particles.splice(i, 1);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0,255,255,${p.alpha})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(animate);
+  }
+  animate();
 
-    renderHistory();
+  // Fortune logic
+  const board       = document.getElementById('surfboard');
+  const fortuneText = document.getElementById('fortune');
+  const oceanSound  = document.getElementById('oceanSound');
+  let   soundStarted = false;
 
-    function startSound() {
-      if (!soundStarted) {
-        oceanSound.volume = 0;
-        oceanSound.play();
-        const fade = setInterval(() => {
-          if (oceanSound.volume < 0.6) {
-            oceanSound.volume += 0.05;
-          } else {
-            clearInterval(fade);
-          }
-        }, 200);
-        soundStarted = true;
-      }
-    }
+  const historyKey = 'surfFortuneHistory';
+  const loadHistory = () =>
+    JSON.parse(localStorage.getItem(historyKey) || '[]');
+  const saveHistory = arr =>
+    localStorage.setItem(historyKey, JSON.stringify(arr.slice(-5)));
 
-    document
-      .getElementById('shareBtn')
-      .addEventListener('click', () => {
-        const text = fortuneText.textContent;
-        if (navigator.share) {
-          navigator.share({
-            title: 'My Surfboard Fortune',
-            text
-          });
+  function renderHistory() {
+    const list = loadHistory();
+    const ul   = document.getElementById('historyList');
+    ul.innerHTML = '';
+    list.slice().reverse().forEach(f => {
+      const li = document.createElement('li');
+      li.textContent = f;
+      ul.appendChild(li);
+    });
+  }
+  renderHistory();
+
+  function startSound() {
+    if (!soundStarted) {
+      oceanSound.volume = 0;
+      oceanSound.play();
+      const fade = setInterval(() => {
+        if (oceanSound.volume < 0.6) {
+          oceanSound.volume += 0.05;
         } else {
-          navigator
-            .clipboard.writeText(text)
-            .then(() => alert('Copied!'));
+          clearInterval(fade);
         }
-      });
+      }, 200);
+      soundStarted = true;
+    }
+  }
 
-    board.addEventListener('click', () => {
-      startSound();
-      board.classList.remove('jiggle');
-      // trigger reflow
-      void board.offsetWidth;
-      board.classList.add('jiggle');
+  document.getElementById('shareBtn').addEventListener('click', () => {
+    const text = fortuneText.textContent;
+    if (navigator.share) {
+      navigator.share({ title: 'My Surfboard Fortune', text });
+    } else {
+      navigator.clipboard.writeText(text).then(() => alert('Copied!'));
+    }
+  });
 
-      const rect = board.getBoundingClientRect();
-      addParticles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+  board.addEventListener('click', () => {
+    startSound();
+    board.classList.remove('jiggle'); void board.offsetWidth;
+    board.classList.add('jiggle');
 
-      const newMsg =
-        fortunes[Math.floor(Math.random() * fortunes.length)];
-      fortuneText.style.opacity = 0;
+    const rect = board.getBoundingClientRect();
+    addParticles(rect.left + rect.width / 2, rect.top + rect.height / 2);
 
-      setTimeout(() => {
-        fortuneText.textContent = newMsg;
-        fortuneText.style.opacity = 1;
-        const hist = loadHistory();
-        hist.push(newMsg);
-        saveHistory(hist);
-        renderHistory();
-      }, 300);
-    });
+    const newMsg = fortunes[Math.floor(Math.random() * fortunes.length)];
+    fortuneText.style.opacity = 0;
+    setTimeout(() => {
+      fortuneText.textContent = newMsg;
+      fortuneText.style.opacity = 1;
+      const hist = loadHistory();
+      hist.push(newMsg);
+      saveHistory(hist);
+      renderHistory();
+    }, 300);
+  });
 
-    // Keyboard support
-    board.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        board.click();
-      }
-    });
-  </script>
+  board.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      board.click();
+    }
+  });
+</script>
 </body>
 </html>
