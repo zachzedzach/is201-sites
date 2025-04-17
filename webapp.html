@@ -241,19 +241,11 @@
     const oceanSound = document.getElementById('oceanSound');
     let soundStarted = false;
 
-    const fortunes = [
-      '🏄‍♂️ Ride the wave, don’t fight it.',
-      '🌴 Your greatest surf is yet to come.',
-      '💧 In still water, clarity. In waves, strength.',
-      '🌊 Don’t wait for the perfect wave — paddle now.',
-      '🍃 Let go. Flow with the tide.',
-      '⚖️ Balance isn’t found, it’s felt.',
-      '🌅 Every fall is a chance to rise smoother.',
-      '🏝️ You are the board. Steer wisely.',
-      '🎯 Catch joy like you catch waves — fully present.',
-      '🌬️ Salt in the air clears the mind.'
-    ];
+    <script type="module">
+  import fortunes from './fortunes.js';
 
+  // …everything that used to follow your const fortunes = [...] line
+</script>
     const historyKey = 'surfFortuneHistory';
 
     function loadHistory() {
